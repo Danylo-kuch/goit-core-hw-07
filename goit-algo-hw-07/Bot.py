@@ -28,6 +28,7 @@ class Birthday(Field):
     def __init__(self, value):
         try:
             self.value = datetime.strptime(value, "%d.%m.%Y").date()
+            self.value = value 
         except ValueError:
             raise ValueError("Invalid date format. Use DD.MM.YYYY")
         
@@ -122,7 +123,7 @@ class AddressBook(UserDict):
     def find(self, name: str):
         record = self.data.get(name)
         if not record:
-            raise ValueError(f"Контакт {name} не знайдено")
+            return None
         return record
 
     
