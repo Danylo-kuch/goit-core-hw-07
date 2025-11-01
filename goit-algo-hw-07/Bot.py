@@ -3,9 +3,12 @@ from datetime import datetime, timedelta
 
 
 def parse_input(user_input):
-    cmd, *args = user_input.split()
+    parts = user_input.split()
+    if not parts:
+        return None, []
+    cmd, *args = parts
     cmd = cmd.strip().lower()
-    return cmd, *args
+    return cmd, args
 
 
 class Field:
@@ -21,7 +24,7 @@ class Name(Field):
 class Phone(Field):
     def __init__(self, value):
         if len(value) != 10 or not value.isdigit():
-            raise ValueError("Номер телефону повинен містити рівно 10 цифр")
+            raise ValueError("Phone number must contain 10 numbers")
         super().__init__(value)
 
 class Birthday(Field):
@@ -32,41 +35,6 @@ class Birthday(Field):
         except ValueError:
             raise ValueError("Invalid date format. Use DD.MM.YYYY")
         
-
-def input_error(func):
-    def inner(args, book):
-        try:
-            if not args and func.__name__ not in ("show_all_contacts", "birthdays"):
-                return "Missing arguments"
-
-            
-            elif func.__name__ == "add_contact" and len(args) != 2:
-                return "Usage: add <name> <phone>"
-            
-            elif func.__name__ == "change_contacts_phone" and len(args) != 3:
-                return "Usage: change <name> <old_phone> <new_phone>"
-            
-            elif func.__name__ == "show_contacts_phones" and len(args) != 1:
-                return "Usage: phone <name>"
-            
-            elif func.__name__ == "show_all_contacts" and len(args) > 0:
-                return "Usage: all"
-            
-            elif func.__name__ == "add_birthday" and len(args) != 2:
-                return "Usage: add-birthday <name> <birthday (DD.MM.YYYY)>"
-            
-            elif func.__name__ == "show_birthday" and len(args) != 1:
-                return "Usage: show-birthday <name>"
-            
-            elif func.__name__ == "birthdays" and len(args) > 0:
-                return "Usage: birthdays"
-            
-            return func(args, book)
-        except KeyError:
-            return f"The name {args[0]} wasn't found in your contacts"
-        except (ValueError, IndexError) as e: 
-            return str(e)
-    return inner
 
 class Record:
     def __init__(self, name):
@@ -108,7 +76,6 @@ class Record:
     
     def add_birthday(self, birthday):
         self.birthday = Birthday(birthday)
-
 
 
 class AddressBook(UserDict):
@@ -158,16 +125,56 @@ class AddressBook(UserDict):
             result.append(str(record))
         return "\n".join(result)
 
+
+        
+
+def input_error(func):
+    def inner(args, book):
+        try:
+            if not args and func.__name__ not in ("show_all_contacts", "birthdays"):
+                return "Missing arguments"
+
+            
+            elif func.__name__ == "add_contact" and len(args) != 2:
+                return "Usage: add <name> <phone>"
+            
+            elif func.__name__ == "change_contacts_phone" and len(args) != 3:
+                return "Usage: change <name> <old_phone> <new_phone>"
+            
+            elif func.__name__ == "show_contacts_phones" and len(args) != 1:
+                return "Usage: phone <name>"
+            
+            elif func.__name__ == "show_all_contacts" and len(args) > 0:
+                return "Usage: all"
+            
+            elif func.__name__ == "add_birthday" and len(args) != 2:
+                return "Usage: add-birthday <name> <birthday (DD.MM.YYYY)>"
+            
+            elif func.__name__ == "show_birthday" and len(args) != 1:
+                return "Usage: show-birthday <name>"
+            
+            elif func.__name__ == "birthdays" and len(args) > 0:
+                return "Usage: birthdays"
+            
+            return func(args, book)
+        except KeyError:
+            return f"The name {args[0]} wasn't found in your contacts"
+        except (ValueError, IndexError) as e: 
+            return str(e)
+    return inner
+
+
 @input_error
 def add_contact(args, book: AddressBook):
     name, phone, *_ = args
-    try:
-        record = book.find(name)
-        message = "Contact updated."
-    except ValueError:
+    record = book.find(name)
+
+    if not record:
         record = Record(name)
         book.add_record(record)
         message = "Contact added."
+    else:
+        message = "Contact updated."
 
     if not record.find_phone(phone):
         record.add_phone(phone)
@@ -239,14 +246,14 @@ def main():
     print("Welcome to the assistant bot!")
     while True:
         user_input = input("Enter a command: ")
-        command, *args = parse_input(user_input)
+        command, args = parse_input(user_input)
 
         if command in ["close", "exit"]:
             print("Good bye!")
             break
 
         elif command == "hello":
-            print("How can I help you?")
+            print("Hi! How can I help you?")
 
         elif command == "add":
             print(add_contact(args, book))
